@@ -1,9 +1,8 @@
-RSpec.describe Todoable do
-  it "has a version number" do
-    expect(Todoable::VERSION).not_to be nil
-  end
+require 'todoable'
 
-  it "does something useful" do
-    expect(false).to eq(true)
+RSpec.describe Todoable::Client do
+  it "should return a client object on valid user authentication" do
+    todo_client = Todoable::Client.new(username: "km.nwani@gmail.com", password: "todoable")
+    expect(todo_client).to be_instance_of Todoable::Client
   end
 end
