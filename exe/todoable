@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+
+require 'todoable/cli'
+Todoable::CLI.start
