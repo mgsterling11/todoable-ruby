@@ -10,13 +10,16 @@ module Todoable
 
       attr_reader :config, :endpoint
 
+      def self.auth
+        @@auth
+      end
+
       def initialize(config)
         @config = config
         authenticate if @@auth.nil? || @@auth.expired?
       end
 
       def list
-        puts "[list] endpoint=#{endpoint}"
         request = {
             method: :get,
             url: endpoint_url
@@ -25,8 +28,64 @@ module Todoable
         submit(request)
       end
 
-      def self.auth
-        @@auth
+      def find(resource_id)
+        headers = {
+            'Accept': 'application/json'
+        }
+
+        request = {
+            method: :get,
+            url: resource_url(resource_id),
+            headers: headers
+        }
+
+        submit(request)
+      end
+
+      def create(body={})
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+
+        request = {
+            method: :post,
+            url: endpoint_url,
+            body: body,
+            headers: headers
+        }
+
+        submit(request)
+      end
+
+      def destroy(resource_id)
+        headers = {
+            'Accept': 'application/json'
+        }
+
+        request = {
+            method: :delete,
+            url: resource_url(resource_id),
+            headers: headers
+        }
+
+        submit(request)
+      end
+
+      def update(resource_id, body={})
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+
+        request = {
+            method: :patch,
+            url: resource_url(resource_id),
+            body: body,
+            headers: headers
+        }
+
+        submit(request)
       end
 
       private
@@ -34,30 +93,31 @@ module Todoable
       def submit(request)
         url     = request[:url]
         method  = request[:method]
-        body    = request[:body]
+        body    = request[:body] || {}
         headers = request[:headers] || {}
         auth    = request[:auth] || nil
 
         uri = URI.parse(url)
 
-        header = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-
         if auth.nil?
-          header['Authorization'] = "Token token=#{@@auth.token}"
+          headers['Authorization'] = "Token token=#{@@auth.token}"
         end
 
         http = Net::HTTP.new(uri.host, uri.port)
 
         case
         when method == :get
-          req = Net::HTTP::Get.new(uri.request_uri, header)
+          req = Net::HTTP::Get.new(uri.request_uri, headers)
+        when method == :put
+          req = Net::HTTP::Put.new(uri.request_uri, headers)
         when method == :post
-          req = Net::HTTP::Post.new(uri.request_uri, header)
+          req = Net::HTTP::Post.new(uri.request_uri, headers)
+          req.body = body.to_json if !body.empty?
         when method == :delete
-          req = Net::HTTP::Delete.new(uri.request_uri, header)
+          req = Net::HTTP::Delete.new(uri.request_uri, headers)
+        when method == :patch
+          req = Net::HTTP::Patch.new(uri.request_uri, headers)
+          req.body = body.to_json if !body.empty?
         else
           raise ArgumentError.new("HTTP method '#{method}' is invalid")
         end
@@ -68,23 +128,33 @@ module Todoable
 
         response = http.request(req)
 
-        puts response.body
-        JSON.parse(response.body)
+        begin
+          return JSON.parse(response.body) if !response.body.nil?
+        rescue JSON::ParserError => e
+        end
+
+        response
       end
 
       def authenticate
         puts "[authenticate]"
+        headers = {
+            'Accept': 'application/json'
+        }
+
         request = {
             method: :post,
             url: endpoint_url("authenticate"),
+            headers: headers,
             auth: {username: config[:username], password: config[:password]}
         }
+
         body = submit(request)
         @@auth = Auth.new(body['token'], body['expires_at'])
       end
 
       def base_url
-        "http://todoable.teachable.tech/api/"
+        "http://todoable.teachable.tech/api"
       end
 
       def endpoint_url(override_endpoint=nil)
