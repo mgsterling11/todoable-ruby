@@ -1,8 +1,8 @@
 # Todoable
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/todoable`. To experiment with that code, run `bin/console` for an interactive prompt.
+A Teachable "Todoable" API Ruby wrapper
 
-TODO: Delete this and the text above, and describe your gem
+Use this gem to interface with Todoable's 9 HTTP endpoints (including authentication)
 
 ## Installation
 
@@ -21,8 +21,10 @@ Or install it yourself as:
     $ gem install todoable
 
 ## Usage
+Example CLI usage:
 
-TODO: Write usage instructions here
+    $ todoable create_list "Grocery List" --username "<username>" --pass "<password>" # prints list JSON payload if successful
+    $ todoable see_lists --username "<username>" --pass "<password>"  # prints an array of all lists
 
 ## Development
 
@@ -32,7 +34,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/todoable.
+Bug reports and pull requests are welcome on GitHub at https://github.com/michaelnwani/todoable-ruby.
 
 ## License
 
